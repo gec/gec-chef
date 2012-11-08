@@ -1,0 +1,21 @@
+# defined groups in terms of user-name@REALM, all of these users must exist
+# in the sasldb that "sasldblistusers2" uses by default (it seems that qpid
+# ignores the sasl-file option the acl).
+group admin admin@QPID
+group service-publisher admin@QPID service@QPID
+group applications app@QPID
+
+# all applications can run with the limited permissions of being able to 
+# create a queue for themselves, consume from only queues they created,
+# bind that queue to the "direct" exchange and publish requests to any exchange
+acl allow applications create queue
+acl allow applications consume queue owner=self
+acl allow applications bind exchange name=amq.direct
+acl allow applications publish all
+
+# publishers and admin users (qpid level management) need to have full access
+acl allow service-publisher all
+acl allow admin all
+
+# Last (default) rule
+acl deny all all
