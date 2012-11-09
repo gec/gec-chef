@@ -2,6 +2,7 @@
 # Cookbook Name:: postgresql
 # Recipe:: server
 #
+# Author:: Brad Montgomery (<bmontgomery@coroutine.com>)
 # Author:: Joshua Timberman (<joshua@opscode.com>)
 # Author:: Lamont Granquist (<lamont@opscode.com>)#
 # Copyright 2009-2011, Opscode, Inc.
@@ -28,25 +29,25 @@ else # > 8.3
   node.default[:postgresql][:ssl] = "true"
 end
 
-node['postgresql']['server']['packages'].each do |pg_pack|
-  package pg_pack do
-    action :install
-  end
-end
+package "postgresql"
 
 service "postgresql" do
   case node['platform']
   when "ubuntu"
     case
-    when node['platform_version'].to_f <= 10.04
+    # PostgreSQL 9.1 on Ubuntu 10.04 gets set up as "postgresql", not "postgresql-9.1"
+    # Is this because of the PPA?
+    when node['platform_version'].to_f <= 10.04 && node['postgresql']['version'].to_f < 9.0
       service_name "postgresql-#{node['postgresql']['version']}"
     else
       service_name "postgresql"
     end
   when "debian"
     case
-    when node['platform_version'].to_f <= 5.0
+    when platform_version.to_f <= 5.0
       service_name "postgresql-#{node['postgresql']['version']}"
+    when platform_version =~ /squeeze/
+      service_name "postgresql"
     else
       service_name "postgresql"
     end
@@ -55,10 +56,54 @@ service "postgresql" do
   action :nothing
 end
 
+postgresql_conf_source = begin
+  if node[:postgresql][:version] == "9.1"
+    "debian.postgresql_91.conf.erb"
+  else
+    "debian.postgresql.conf.erb"
+  end
+end
+
 template "#{node[:postgresql][:dir]}/postgresql.conf" do
-  source "debian.postgresql.conf.erb"
+  source postgresql_conf_source
   owner "postgres"
   group "postgres"
   mode 0600
-  notifies :restart, resources(:service => "postgresql"), :immediately
+  notifies :restart, resources(:service => "postgresql")
+end
+
+if node[:postgresql][:standby]
+  # This goes in the data directory; where data is stored
+  node_name = Chef::Config[:node_name]
+  master_ip = node[:postgresql][:master_ip]
+  template "/var/lib/postgresql/#{node[:postgresql][:version]}/main/recovery.conf" do
+    source "recovery.conf.erb"
+    owner "postgres"
+    group "postgres"
+    mode 0600
+    variables(
+      :primary_conninfo => "host=#{master_ip} application_name=#{node_name}",
+      :trigger_file => "/var/lib/postgresql/#{node[:postgresql][:version]}/main/trigger"
+    )
+    notifies :restart, resources(:service => "postgresql")
+  end
+end
+
+# Copy data files from master to standby. Should only happen once.
+if node[:postgresql][:master] && (not node[:postgresql][:standby_ips].empty?)
+  node[:postgresql][:standby_ips].each do |address|
+    bash "Copy Master data files to Standby" do
+      user "root"
+      cwd "/var/lib/postgresql/#{node[:postgresql][:version]}/main/"
+      code <<-EOH
+        invoke-rc.d postgresql stop
+        rsync -av --exclude=pg_xlog * #{address}:/var/lib/postgresql/#{node[:postgresql][:version]}/main/
+        touch .initial_transfer_complete
+        invoke-rc.d postgresql start
+      EOH
+      not_if do
+        File.exists?("/var/lib/postgresql/#{node[:postgresql][:version]}/main/.initial_transfer_complete")
+      end
+    end
+  end
 end

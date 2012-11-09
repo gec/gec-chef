@@ -1,9 +1,8 @@
 #
 # Cookbook Name:: postgresql
-# Recipe:: ruby
+# Recipe::apt_postgresql_ppa
 #
-# Author:: Joshua Timberman (<joshua@opscode.com>)
-# Copyright 2012 Opscode, Inc.
+# Copyright 2012, Coroutine LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,19 +17,20 @@
 # limitations under the License.
 #
 
-execute "apt-get update" do
-  ignore_failure true
-  action :nothing
-end.run_action(:run) if node['platform_family'] == "debian"
+# Add the PostgreSQL 9.1 sources for Ubuntu
+# using the PPA available at:
+# https://launchpad.net/~pitti/+archive/postgresql
 
-node.set['build_essential']['compiletime'] = true
-include_recipe "build-essential"
-include_recipe "postgresql::client"
-
-node['postgresql']['client']['packages'].each do |pg_pack|
-
-  resources("package[#{pg_pack}]").run_action(:install)
-
+# NOTE: This requires the "apt" recipe
+case node["platform"]
+when "ubuntu"
+  apt_repository "postgresql" do
+    uri "http://ppa.launchpad.net/pitti/postgresql/ubuntu"
+    distribution node['lsb']['codename']
+    components ["main"]
+    keyserver "keyserver.ubuntu.com"
+    key "8683D8A2"
+    action :add
+    notifies :run, resources(:execute => "apt-get update"), :immediately
+  end
 end
-
-chef_gem "pg"
