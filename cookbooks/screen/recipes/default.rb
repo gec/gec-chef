@@ -20,3 +20,7 @@
 package "screen" do
   action :install
 end
+
+cookbook_file "/etc/.screenrc" do
+  mode "0644"
+end
