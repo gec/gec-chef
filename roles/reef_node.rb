@@ -5,7 +5,8 @@ all_env = [
   "role[qpid_box]",
   "role[psql_box]",
   "role[java_haver]",
-  "recipe[reefdb]"
+  "recipe[reefdb]",
+  "recipe[reef]"
 ]
 
 run_list(all_env)
