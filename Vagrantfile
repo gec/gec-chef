@@ -1,5 +1,5 @@
 
-external_postgres = {
+shared_json = {
   :postgresql => {
     :version => "9.1",
     :hba => [{"address" => "0.0.0.0/0", "method" => "md5"}],
@@ -14,63 +14,62 @@ Vagrant::Config.run do |config|
 
     rs_config.vm.network :hostonly, "192.168.2.10"
     rs_config.vm.box = "precise64"
-    #rs_config.vm.forward_port 5672, 5672
-    #rs_config.vm.forward_port 5432, 5432
+    rs_config.vm.forward_port 22, 2222
 
     rs_config.vm.provision :chef_solo do |chef|
       chef.cookbooks_path = ['cookbooks']
       chef.roles_path = ['roles']
       chef.add_role("reef_support")
       
-      chef.json = {
-        :postgresql => {
-          :version => "9.1",
-          :hba => [{"address" => "0.0.0.0/0", "method" => "md5"}],
-          :listen_addresses => "*"
-        }
-      }
+      chef.json = shared_json
     end 
 
   end
 
-  config.vm.define :reef_cluster_1 do |rc1_config|
+  config.vm.define :reef_cluster_1 do |node_config|
 
-    rc1_config.vm.network :hostonly, "192.168.2.11"
-    rc1_config.vm.box = "precise64"
+    node_config.vm.network :hostonly, "192.168.2.11"
+    node_config.vm.box = "precise64"
+    node_config.vm.forward_port 22, 2200
 
-    rc1_config.vm.provision :chef_solo do |chef|
+    node_config.vm.provision :chef_solo do |chef|
       chef.cookbooks_path = ['cookbooks']
       chef.roles_path = ['roles']
       chef.add_role("reef_node")
       
-      chef.json = {
-        :postgresql => {
-          :version => "9.1",
-          :hba => [{"address" => "0.0.0.0/0", "method" => "md5"}],
-          :listen_addresses => "*"
-        }
-      }
+      chef.json = shared_json
     end 
 
   end
 
-  config.vm.define :reef_cluster_2 do |rc2_config|
+  config.vm.define :reef_cluster_2 do |node_config|
 
-    rc2_config.vm.network :hostonly, "192.168.2.12"
-    rc2_config.vm.box = "precise64"
+    node_config.vm.network :hostonly, "192.168.2.12"
+    node_config.vm.box = "precise64"
+    node_config.vm.forward_port 22, 2201
 
-    rc2_config.vm.provision :chef_solo do |chef|
+    node_config.vm.provision :chef_solo do |chef|
       chef.cookbooks_path = ['cookbooks']
       chef.roles_path = ['roles']
       chef.add_role("reef_node")
       
-      chef.json = {
-        :postgresql => {
-          :version => "9.1",
-          :hba => [{"address" => "0.0.0.0/0", "method" => "md5"}],
-          :listen_addresses => "*"
-        }
-      }
+      chef.json = shared_json
+    end 
+
+  end
+
+  config.vm.define :reef_cluster_3 do |node_config|
+
+    node_config.vm.network :hostonly, "192.168.2.13"
+    node_config.vm.box = "precise64"
+    node_config.vm.forward_port 22, 2202
+
+    node_config.vm.provision :chef_solo do |chef|
+      chef.cookbooks_path = ['cookbooks']
+      chef.roles_path = ['roles']
+      chef.add_role("reef_node")
+      
+      chef.json = shared_json
     end 
 
   end
