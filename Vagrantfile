@@ -10,68 +10,48 @@ shared_json = {
 
 Vagrant::Config.run do |config|
 
-  config.vm.define :reef_support do |rs_config|
+  nodes = [{ 
+    :name => :reef_support,
+    :ssh_port => 2222,
+    :ip => "192.169.2.10",
+    :role => "reef_support"
+  },
+  {
+    :name => :reef_cluster_1,
+    :ssh_port => 2200,
+    :ip => "192.169.2.11",
+    :role => "reef_node" 
+  },
+  {
+    :name => :reef_cluster_2,
+    :ssh_port => 2201,
+    :ip => "192.169.2.12",
+    :role => "reef_node" 
+  },
+  {
+    :name => :reef_cluster_3,
+    :ssh_port => 2202,
+    :ip => "192.169.2.13",
+    :role => "reef_node" 
+  }]
 
-    rs_config.vm.network :hostonly, "192.168.2.10"
-    rs_config.vm.box = "precise64"
-    rs_config.vm.forward_port 22, 2222
 
-    rs_config.vm.provision :chef_solo do |chef|
-      chef.cookbooks_path = ['cookbooks']
-      chef.roles_path = ['roles']
-      chef.add_role("reef_support")
-      
-      chef.json = shared_json
-    end 
+  nodes.each do |n|  
+    config.vm.define n[:name] do |node_config|
 
+      node_config.vm.network :hostonly, n[:ip]
+      node_config.vm.box = "precise64"
+      node_config.vm.forward_port 22, n[:ssh_port]
+
+      node_config.vm.provision :chef_solo do |chef|
+        chef.cookbooks_path = ['cookbooks']
+        chef.roles_path = ['roles']
+        chef.add_role(n[:role])
+        
+        chef.json = shared_json
+      end 
+    end
   end
 
-  config.vm.define :reef_cluster_1 do |node_config|
-
-    node_config.vm.network :hostonly, "192.168.2.11"
-    node_config.vm.box = "precise64"
-    node_config.vm.forward_port 22, 2200
-
-    node_config.vm.provision :chef_solo do |chef|
-      chef.cookbooks_path = ['cookbooks']
-      chef.roles_path = ['roles']
-      chef.add_role("reef_node")
-      
-      chef.json = shared_json
-    end 
-
-  end
-
-  config.vm.define :reef_cluster_2 do |node_config|
-
-    node_config.vm.network :hostonly, "192.168.2.12"
-    node_config.vm.box = "precise64"
-    node_config.vm.forward_port 22, 2201
-
-    node_config.vm.provision :chef_solo do |chef|
-      chef.cookbooks_path = ['cookbooks']
-      chef.roles_path = ['roles']
-      chef.add_role("reef_node")
-      
-      chef.json = shared_json
-    end 
-
-  end
-
-  config.vm.define :reef_cluster_3 do |node_config|
-
-    node_config.vm.network :hostonly, "192.168.2.13"
-    node_config.vm.box = "precise64"
-    node_config.vm.forward_port 22, 2202
-
-    node_config.vm.provision :chef_solo do |chef|
-      chef.cookbooks_path = ['cookbooks']
-      chef.roles_path = ['roles']
-      chef.add_role("reef_node")
-      
-      chef.json = shared_json
-    end 
-
-  end
 	
 end
