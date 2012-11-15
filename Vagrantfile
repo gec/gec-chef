@@ -33,6 +33,14 @@ Vagrant::Config.run do |config|
     :ssh_port => 2202,
     :ip => "192.169.2.13",
     :role => "reef_node" 
+  },
+  {
+    :name => :reef_builder,
+    :ssh_port => 2223,
+    :ip => "192.169.2.9",
+    :role => "build_machine",
+    :memory => 1024,
+    :cpus => 2
   }]
 
 
@@ -42,6 +50,9 @@ Vagrant::Config.run do |config|
       node_config.vm.network :hostonly, n[:ip]
       node_config.vm.box = "precise64"
       node_config.vm.forward_port 22, n[:ssh_port]
+
+      config.vm.customize ["modifyvm", :id, "--memory", n[:memory]] if n[:memory]
+      config.vm.customize ["modifyvm", :id, "--cpus", n[:cpus]] if n[:cpus]
 
       node_config.vm.provision :chef_solo do |chef|
         chef.cookbooks_path = ['cookbooks']
