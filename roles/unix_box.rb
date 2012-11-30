@@ -5,7 +5,7 @@ all_env = [
   "recipe[build-essential]",  # It's almost never worth not installing this
   "recipe[htop]",
   "recipe[nano]",
-  "recipe[screen]",
+  "recipe[screen]"
 ]
 
 run_list(all_env)
