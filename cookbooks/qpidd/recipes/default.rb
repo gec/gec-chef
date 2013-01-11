@@ -1,7 +1,5 @@
 
 
-
-
 package "qpidd" do
   case node[:platform]
   when "centos","redhat","fedora","suse"
@@ -21,14 +19,14 @@ service "qpidd" do
   supports :restart => true, :start => true, :stop => true
 end
 
-cookbook_file "#{node[:qpidd][:config_dir]}/qpidd.conf" do
+cookbook_file node[:qpidd][:config_file] do
   source "qpidd.conf"
   mode 0755
   owner "root"
   group "root"
 end
 
-cookbook_file "#{node[:qpidd][:config_dir]}/qpidd.acl" do
+cookbook_file node[:qpidd][:acl_file] do
   source "qpidd.acl"
   mode 0755
   owner "root"
