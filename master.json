@@ -1,1 +1,1 @@
-{ "run_list": "role[master_box]" }
+{ "run_list": "role[reef_node]" }
