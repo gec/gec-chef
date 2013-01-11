@@ -1,5 +1,19 @@
 
-package "qpidd"
+
+
+
+package "qpidd" do
+  case node[:platform]
+  when "centos","redhat","fedora","suse"
+    package_name "qpid-cpp-server"
+  when "debian","ubuntu"
+    package_name "qpidd"
+  when "arch"
+    package_name "qpidd"
+  end 
+  action :install
+end
+
 package "qpid-tools"
 
 service "qpidd" do
